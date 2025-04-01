@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { login, logout, setEmail, setShowEmailInput, setShowPopup } from "./store/authSlice";
 import "./App.css";
 import TodoForm from "./components/todoform/TodoForm";
 import Tabs from "./components/tabs/Tabs";
@@ -6,33 +7,31 @@ import TodoList from "./components/todolist/TodoList";
 import Alert from "./components/alert/Alert";
 
 function App() {
-  const [isSignedIn, setIsSignedIn] = useState(false);
-  const [showEmailInput, setShowEmailInput] = useState(false);
-  const [email, setEmail] = useState("");
-  const [showPopup, setShowPopup] = useState(false);
+  const dispatch = useDispatch();
+  const { isAuthenticated, email, showEmailInput, showPopup } = useSelector(
+    (state) => state.auth
+  );
 
   const handleSignInClick = () => {
-    setShowEmailInput(true);
+    dispatch(setShowEmailInput(true));
   };
 
   const handleInputChange = (e) => {
-    setEmail(e.target.value);
+    dispatch(setEmail(e.target.value));
   };
 
   const handleSignInSubmit = () => {
     if (email.trim() !== "") {
-      setIsSignedIn(true);
-      setShowEmailInput(false);
-      setShowPopup(true);
-      setTimeout(() => setShowPopup(false), 2000);
+      dispatch(login(email));
+      dispatch(setShowPopup(true));
+      setTimeout(() => dispatch(setShowPopup(false)), 2000);
     }
   };
 
   const handleSignOut = () => {
-    setIsSignedIn(false);
-    setEmail("");
-    setShowPopup(true);
-    setTimeout(() => setShowPopup(false), 2000);
+    dispatch(logout());
+    dispatch(setShowPopup(true));
+    setTimeout(() => dispatch(setShowPopup(false)), 2000);
   };
 
   return (
@@ -40,7 +39,7 @@ function App() {
       <div className="header">
         <div className="app_title">Todo App</div>
         <div className="auth_section">
-          {!isSignedIn && !showEmailInput && (
+          {!isAuthenticated && !showEmailInput && (
             <button className="sign_in_btn" onClick={handleSignInClick}>
               Sign In
             </button>
@@ -58,7 +57,7 @@ function App() {
               </button>
             </div>
           )}
-          {isSignedIn && (
+          {isAuthenticated && (
             <button className="sign_out_btn" onClick={handleSignOut}>
               Sign Out
             </button>
@@ -66,12 +65,18 @@ function App() {
         </div>
       </div>
       {showPopup && (
-        <div className="popup">{isSignedIn ? "Signed In Successfully!" : "Signed Out Successfully!"}</div>
+        <div className="popup">
+          {isAuthenticated ? "Signed In Successfully!" : "Signed Out Successfully!"}
+        </div>
       )}
       <Alert />
-      <TodoForm />
-      <Tabs />
-      <TodoList />
+      {isAuthenticated && (
+        <>
+          <TodoForm />
+          <Tabs />
+          <TodoList />
+        </>
+      )}
     </div>
   );
 }
